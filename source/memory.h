@@ -31,17 +31,21 @@ void store(MemoryModule *module, uint32_t address, uint32_t value);
 static inline void memory_clear_error(MemoryModule *module)
 {
     assert(module);
+    assert(module->data);
     module->data[MEMORY_ERROR_CODE_LOCATION] = NO_ERROR;
 }
 
 static inline bool memory_has_error(MemoryModule *module)
 {
     assert(module);
+    assert(module->data);
     return module->data[MEMORY_ERROR_CODE_LOCATION] != NO_ERROR;
 }
 
 static inline MemoryError memory_error(MemoryModule *module)
 {
+    assert(module);
+    assert(module->data);
     return module->data[MEMORY_ERROR_CODE_LOCATION];
 }
 
