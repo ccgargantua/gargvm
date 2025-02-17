@@ -1,30 +1,35 @@
+SRC_DIR = ./source
+BUILD_DIR = ./build
+
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
-SRC_DIR = gargvm
-BUILD_DIR = build
-EXECUTABLE = $(BUILD_DIR)/gargvm
+CFLAGS_COMMON = -std=c11 -Wall -Wextra -fanalyzer -Wshadow -Wpedantic -Wconversion
+EXE = gargvm
 
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
+SRC = $(wildcard $(SRC_DIR)/*.c)
+OBJ = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
-OBJ_FILES = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC_FILES))
+CFLAGS = $(CFLAGS_COMMON)
+DEBUG_FLAGS = -ggdb -Og -DDEBUG
+RELEASE_FLAGS = -Werror -O2 -DNDEBUG
 
-all: $(EXECUTABLE)
-
-debug: CFLAGS += -DDEBUG -g
-debug: all
-release: CFLAGS += -O3 -Werror
-release: all
-
-$(EXECUTABLE): $(OBJ_FILES)
-	$(CC) $(CFLAGS) -o $@ $^
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+all: debug
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+$(BUILD_DIR)/$(EXE): $(OBJ) | $(BUILD_DIR)
+	$(CC) $(OBJ) -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+debug: CFLAGS += $(DEBUG_FLAGS)
+debug: $(BUILD_DIR)/$(EXE)
+
+release: CFLAGS += $(RELEASE_FLAGS)
+release: $(BUILD_DIR)/$(EXE)
+
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all clean debug release
+.PHONY: all debug release clean
