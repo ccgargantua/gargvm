@@ -78,7 +78,7 @@ bool CPU_execute_program(CPU *cpu, MemoryModule *module,  uint32_t *program)
             break;
         case POP:
             // TODO
-            // *(uint32_t*)(++program) = pop(cpu);
+            (void)pop(cpu);
             break;
         case ADD:
             add(cpu);
