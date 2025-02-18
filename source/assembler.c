@@ -1,13 +1,13 @@
 #include "assembler.h"
 #include "cpu.h"
+#include "debug.h"
 
 #include <stdio.h>
 
 #define DELIMITERS ",; \t\n"
 
-
-#define PROGRAM_SIZE_LIMIT 64u * 1024u
-
+#define PROGRAM_CHARACTER_LIMIT ( 64u * 1024u )
+#define PROGRAM_SIZE_LIMIT      ( PROGRAM_CHARACTER_LIMIT / sizeof(uint32_t) )
 
 // So, we will see a lot of unsafe string functions here...
 // I, personally, think a certain level of reliance on
@@ -19,7 +19,11 @@
 
 uint32_t *assemble(char *code, size_t code_size)
 {
-    assert(code_size > 0 && code_size <= PROGRAM_SIZE_LIMIT);
+    if (code_size == 0 || code_size > PROGRAM_CHARACTER_LIMIT)
+    {
+        dbg_printf("Invalid code size %llu must be in range (0, %llu\n]", code_size, PROGRAM_CHARACTER_LIMIT);
+        return NULL;
+    }
     uint32_t gbc[PROGRAM_SIZE_LIMIT] = {0};
     size_t gbc_size = 0;
 
@@ -32,14 +36,14 @@ uint32_t *assemble(char *code, size_t code_size)
             peeked = strtok(NULL, DELIMITERS);
             if (!peeked)
             {
-                fprintf(stderr, "Invalid next token for instruction PUSH '%s'\n", peeked);
+                dbg_printf("Next token is NULL\n");
                 return NULL;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
-                fprintf(stderr, "Invalid next token for instruction PUSH '%s'\n", peeked);
+                dbg_printf("Invalid next token for instruction PUSH '%s'\n", peeked);
                 return NULL;
             }
             gbc[gbc_size++] = arg;
@@ -50,14 +54,14 @@ uint32_t *assemble(char *code, size_t code_size)
             peeked = strtok(NULL, DELIMITERS);
             if (!peeked)
             {
-                fprintf(stderr, "Invalid next token for instruction POP '%s'\n", peeked);
+                dbg_printf("Next token is NULL\n");
                 return NULL;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
-                fprintf(stderr, "Invalid next token for instruction POP '%s'\n", peeked);
+                dbg_printf("Invalid next token for instruction POP '%s'\n", peeked);
                 return NULL;
             }
             gbc[gbc_size++] = arg;
@@ -77,14 +81,14 @@ uint32_t *assemble(char *code, size_t code_size)
             peeked = strtok(NULL, DELIMITERS);
             if (!peeked)
             {
-                fprintf(stderr, "Invalid next token for instruction FWD '%s'\n", peeked);
+                dbg_printf("Next token is NULL\n");
                 return NULL;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
-                fprintf(stderr, "Invalid next token for instruction FWD '%s'\n", peeked);
+                dbg_printf("Invalid next token for instruction FWD '%s'\n", peeked);
                 return NULL;
             }
             gbc[gbc_size++] = arg;
@@ -95,21 +99,21 @@ uint32_t *assemble(char *code, size_t code_size)
             peeked = strtok(NULL, DELIMITERS);
             if (!peeked)
             {
-                fprintf(stderr, "Invalid next token for instruction SWD '%s'\n", peeked);
+                dbg_printf("Next token is NULL\n");
                 return NULL;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
-                fprintf(stderr, "Invalid next token for instruction SWD '%s'\n", peeked);
+                dbg_printf("Invalid next token for instruction SWD '%s'\n", peeked);
                 return NULL;
             }
             gbc[gbc_size++] = arg;
         }
         else
         {
-            fprintf(stderr, "Invalid instruction '%u\n'", *peeked);
+            dbg_printf("Invalid instruction '%u\n'", *peeked);
             return NULL;
         }
 
@@ -119,6 +123,11 @@ uint32_t *assemble(char *code, size_t code_size)
     gbc[gbc_size++] = PROGRAM_END;
 
     uint32_t *program_code = calloc(sizeof(uint32_t), gbc_size);
+    if (!program_code)
+    {
+        dbg_printf("Allocation for program code failed.\n");
+        return NULL;
+    }
     memcpy(program_code, gbc, sizeof(uint32_t) * gbc_size);
     assert(program_code);
 

@@ -49,5 +49,4 @@ static inline MemoryError memory_error(MemoryModule *module)
     return module->data[MEMORY_ERROR_CODE_LOCATION];
 }
 
-
 #endif

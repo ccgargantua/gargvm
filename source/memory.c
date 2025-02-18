@@ -17,6 +17,7 @@ uint32_t fetch(MemoryModule* module, uint32_t address)
 
     return module->data[address];
 }
+
 void store(MemoryModule *module, uint32_t address, uint32_t value)
 {
     assert(module);
@@ -27,3 +28,4 @@ void store(MemoryModule *module, uint32_t address, uint32_t value)
         module->data[MEMORY_ERROR_CODE_LOCATION] = RESERVED_SPACE;
     module->data[address] = value;
 }
+

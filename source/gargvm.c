@@ -12,11 +12,13 @@
 #include "cpu.h"
 #include "memory.h"
 #include "assembler.h"
+#include "debug.h"
 
 char *read_file_to_string(const char *filename) {
     FILE *file = fopen(filename, "rb");
-    if (!file) {
-        fprintf(stderr, "Failed to open file");
+    if (!file)
+    {
+        dbg_printf("Cannot open file '%s'\n", filename);
         return NULL;
     }
 
@@ -25,8 +27,9 @@ char *read_file_to_string(const char *filename) {
     rewind(file);
 
     char *buffer = malloc(file_size + 1);
-    if (!buffer) {
-        fprintf(stderr, "Failed to allocate memory");
+    if (!buffer)
+    {
+        dbg_printf("Failed to allocate memory to string buffer.\n");
         fclose(file);
         return NULL;
     }
