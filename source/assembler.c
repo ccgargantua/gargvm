@@ -123,13 +123,8 @@ uint32_t *assemble(char *code, size_t code_size)
     gbc[gbc_size++] = PROGRAM_END;
 
     uint32_t *program_code = calloc(sizeof(uint32_t), gbc_size);
-    if (!program_code)
-    {
-        dbg_printf("Allocation for program code failed.\n");
-        return NULL;
-    }
-    memcpy(program_code, gbc, sizeof(uint32_t) * gbc_size);
     assert(program_code);
+    memcpy(program_code, gbc, sizeof(uint32_t) * gbc_size);
 
     return program_code;
 }
