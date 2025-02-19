@@ -168,7 +168,7 @@ bool CPU_execute_program(CPU *cpu, MemoryModule *module,  uint32_t *program)
             break;
         case SWD:
             {
-                uint32_t v;
+                uint32_t v = 0; // Temp UB fix
                 pop(cpu, &v);
                 store(module, *++program, v);
             }
