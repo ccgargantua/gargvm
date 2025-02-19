@@ -19,10 +19,12 @@
 
 uint32_t *assemble(char *code, size_t code_size)
 {
+    uint32_t *program_code = NULL;
+
     if (code_size == 0 || code_size > PROGRAM_CHARACTER_LIMIT)
     {
         dbg_printf("Invalid code size %llu must be in range (0, %llu\n]", code_size, PROGRAM_CHARACTER_LIMIT);
-        return NULL;
+        goto assembly_failure;
     }
     uint32_t gbc[PROGRAM_SIZE_LIMIT] = {0};
     size_t gbc_size = 0;
@@ -37,14 +39,14 @@ uint32_t *assemble(char *code, size_t code_size)
             if (!peeked)
             {
                 dbg_printf("Next token is NULL\n");
-                return NULL;
+                goto assembly_failure;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
                 dbg_printf("Invalid next token for instruction PUSH '%s'\n", peeked);
-                return NULL;
+                goto assembly_failure;
             }
             gbc[gbc_size++] = arg;
         }
@@ -55,14 +57,14 @@ uint32_t *assemble(char *code, size_t code_size)
             if (!peeked)
             {
                 dbg_printf("Next token is NULL\n");
-                return NULL;
+                goto assembly_failure;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
                 dbg_printf("Invalid next token for instruction POP '%s'\n", peeked);
-                return NULL;
+                goto assembly_failure;
             }
             gbc[gbc_size++] = arg;
         }
@@ -82,14 +84,14 @@ uint32_t *assemble(char *code, size_t code_size)
             if (!peeked)
             {
                 dbg_printf("Next token is NULL\n");
-                return NULL;
+                goto assembly_failure;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
                 dbg_printf("Invalid next token for instruction FWD '%s'\n", peeked);
-                return NULL;
+                goto assembly_failure;
             }
             gbc[gbc_size++] = arg;
         }
@@ -100,21 +102,21 @@ uint32_t *assemble(char *code, size_t code_size)
             if (!peeked)
             {
                 dbg_printf("Next token is NULL\n");
-                return NULL;
+                goto assembly_failure;
             }
 
             uint32_t arg;
             if (sscanf(peeked, "%u", &arg) <= 0)
             {
                 dbg_printf("Invalid next token for instruction SWD '%s'\n", peeked);
-                return NULL;
+                goto assembly_failure;
             }
             gbc[gbc_size++] = arg;
         }
         else
         {
             dbg_printf("Invalid instruction '%u\n'", *peeked);
-            return NULL;
+            goto assembly_failure;
         }
 
         peeked = strtok(NULL, DELIMITERS);
@@ -122,9 +124,11 @@ uint32_t *assemble(char *code, size_t code_size)
 
     gbc[gbc_size++] = PROGRAM_END;
 
-    uint32_t *program_code = calloc(sizeof(uint32_t), gbc_size);
+    program_code = calloc(sizeof(uint32_t), gbc_size);
     assert(program_code);
     memcpy(program_code, gbc, sizeof(uint32_t) * gbc_size);
 
+
+    assembly_failure:
     return program_code;
 }
