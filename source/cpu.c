@@ -5,6 +5,9 @@
 #include <stdio.h>
 
 
+#include "debug.h"
+
+
 CPU * create_CPU(uint32_t stack_size, uint32_t cache_size)
 {
     CPU *cpu = malloc(sizeof(CPU));
@@ -23,48 +26,114 @@ CPU * create_CPU(uint32_t stack_size, uint32_t cache_size)
     return cpu;
 }
 
-static void push(CPU *cpu, uint32_t arg)
+
+typedef enum
+{
+    CPU_NO_ERROR,
+
+    CPU_OUT_OF_STACK_BOUNDS,
+    CPU_BAD_OPERATION,
+} CPUError;
+
+
+static CPUError push(CPU *cpu, uint32_t arg)
 {
     assert(cpu);
+    assert(cpu->stack && cpu->stack_pointer);
+    if (cpu->stack + cpu->stack_size == cpu->stack_pointer)
+    {
+        dbg_printf("Attempted push past stack limit.\n");
+        return CPU_OUT_OF_STACK_BOUNDS;
+    }
     *(cpu->stack_pointer++) = arg;
+
+    return CPU_NO_ERROR;
 }
 
-static uint32_t pop(CPU *cpu)
+static CPUError pop(CPU *cpu, uint32_t *dest)
 {
     assert(cpu);
-    return *(--cpu->stack_pointer);
+    assert(cpu->stack && cpu->stack_pointer);
+    if (cpu->stack == cpu->stack_pointer)
+    {
+        dbg_printf("Attempted to pop from empty stack.\n");
+        return CPU_OUT_OF_STACK_BOUNDS;
+    }
+    *dest = *(--cpu->stack_pointer);
+    return CPU_NO_ERROR;
 }
 
-static void add(CPU *cpu)
+static CPUError add(CPU *cpu)
 {
     assert(cpu);
-    push(cpu, pop(cpu) + pop(cpu));
+    assert(cpu->stack && cpu->stack_pointer);
+
+    uint32_t v1, v2;
+
+    CPUError e = pop(cpu, &v1);
+    if (e != CPU_NO_ERROR) return e;
+
+    e = pop(cpu, &v2);
+    if (e != CPU_NO_ERROR) return e;
+
+    return push(cpu, v1 + v2);
 }
 
-static void subtract(CPU *cpu)
+static CPUError subtract(CPU *cpu)
 {
     assert(cpu);
-    uint32_t temp = pop(cpu);
-    push(cpu, pop(cpu) - temp);
+    assert(cpu->stack && cpu->stack_pointer);
+
+    uint32_t v1, v2;
+
+    CPUError e = pop(cpu, &v1);
+    if (e != CPU_NO_ERROR) return e;
+
+    e = pop(cpu, &v2);
+    if (e != CPU_NO_ERROR) return e;
+
+    return push(cpu, v2 - v1);
 }
 
-static void multiply(CPU *cpu)
+static CPUError multiply(CPU *cpu)
 {
     assert(cpu);
-    push(cpu, pop(cpu) * pop(cpu));
+    assert(cpu->stack && cpu->stack_pointer);
+
+    uint32_t v1, v2;
+
+    CPUError e = pop(cpu, &v1);
+    if (e != CPU_NO_ERROR) return e;
+
+    e = pop(cpu, &v2);
+    if (e != CPU_NO_ERROR) return e;
+
+    return push(cpu, v1 * v2);
 }
 
-static void divide(CPU *cpu)
+static CPUError divide(CPU *cpu)
 {
     assert(cpu);
-    uint32_t temp = pop(cpu);
-    push(cpu, temp / pop(cpu));
+    assert(cpu->stack && cpu->stack_pointer);
+
+    uint32_t v1, v2;
+
+    CPUError e = pop(cpu, &v1);
+    if (e != CPU_NO_ERROR) return e;
+
+    e = pop(cpu, &v2);
+    if (e != CPU_NO_ERROR) return e;
+
+    if (v1 == 0) return CPU_BAD_OPERATION;
+
+    return push(cpu, v2/v1);
 }
 
 bool CPU_execute_program(CPU *cpu, MemoryModule *module,  uint32_t *program)
 {
     assert(cpu);
-    assert(module);
+    assert(cpu->stack && cpu->stack_pointer);
+    assert(module && module->data);
     assert(program);
 
     while (*program != PROGRAM_END)
@@ -77,7 +146,10 @@ bool CPU_execute_program(CPU *cpu, MemoryModule *module,  uint32_t *program)
             push(cpu, *(++program));
             break;
         case POP:
-            (void)pop(cpu);
+            {
+                uint32_t dummy;
+                (void)pop(cpu, &dummy);
+            }
             break;
         case ADD:
             add(cpu);
@@ -95,10 +167,14 @@ bool CPU_execute_program(CPU *cpu, MemoryModule *module,  uint32_t *program)
             push(cpu, fetch(module, *++program));
             break;
         case SWD:
-            store(module, *++program, pop(cpu));
+            {
+                uint32_t v;
+                pop(cpu, &v);
+                store(module, *++program, v);
+            }
             break;
         default:
-            assert(0);
+            return false;
         }
 
         if (memory_has_error(module))

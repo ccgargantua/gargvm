@@ -6,6 +6,10 @@
 #include <stdio.h>
 
 
+#define STRINGIFYX(x) #x
+#define STRINGIFY(x) STRINGIFYX(x)
+
+
 #ifndef NDEBUG
 
     static inline void dbg_printf(const char *format, ...)

@@ -19,9 +19,9 @@ typedef struct
 
 typedef enum
 {
-    NO_ERROR,
-    OUT_OF_BOUNDS,
-    RESERVED_SPACE,
+    MEMORY_NO_ERROR,
+    MEMORY_OUT_OF_BOUNDS,
+    MEMORY_RESERVED_SPACE,
 } MemoryError;
 
 
@@ -32,14 +32,14 @@ static inline void memory_clear_error(MemoryModule *module)
 {
     assert(module);
     assert(module->data);
-    module->data[MEMORY_ERROR_CODE_LOCATION] = NO_ERROR;
+    module->data[MEMORY_ERROR_CODE_LOCATION] = MEMORY_NO_ERROR;
 }
 
 static inline bool memory_has_error(MemoryModule *module)
 {
     assert(module);
     assert(module->data);
-    return module->data[MEMORY_ERROR_CODE_LOCATION] != NO_ERROR;
+    return module->data[MEMORY_ERROR_CODE_LOCATION] != MEMORY_NO_ERROR;
 }
 
 static inline MemoryError memory_error(MemoryModule *module)
