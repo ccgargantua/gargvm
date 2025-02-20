@@ -40,6 +40,9 @@ The Gargantua Virtual Machine (GargVM) is a stack-based virtual machine.
             - Subroutines
             - Syscalls
 
+        - Improvements
+            - Lookup table for instruction function pointers
+
         - VM features
             - Internal hardware emulation (cache(s), memory organization, persistent "storage")
             - Emulated I/O periphrial support
